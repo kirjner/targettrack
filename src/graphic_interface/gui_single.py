@@ -207,10 +207,17 @@ class RemoteConnection:
             return obtain(self.validate_connection())
         except:
             return False
-
+    
     def close(self):
-        if hasattr(self, 'conn'):
-            self.conn.close()
+        """Close the remote connection."""
+        try:
+            if hasattr(self, 'conn'):
+                self.conn.close()  # Close the rpyc connection if it exists
+                logger.info("Remote connection closed successfully.")
+        except Exception as e:
+            logger.error(f"Error closing remote connection: {str(e)}")
+
+
 
 class RemoteH5File(DataSet):
     """HDF5 file proxy that loads data on demand from remote server"""
@@ -538,43 +545,74 @@ class RemoteH5File(DataSet):
             logger.error(f"Error retrieving 'ci_int': {str(e)}")
             return None
 
+    @property
+    def ca_act(self):
+        """Get calcium activity data, preferring local copy if available."""
+        if self._local_ca_data is None:
+            # Load from remote if not cached locally
+            try:
+                dataset = self._get_dataset("/ci_int")
+                if dataset is not None:
+                    self._local_ca_data = obtain(dataset[:])
+            except Exception as e:
+                logger.error(f"Error loading calcium data: {str(e)}")
+                return None
+        return self._local_ca_data
+
     @ca_act.setter
     def ca_act(self, ca_activity: np.ndarray):
-        """
-        Set the ci_int data on the remote server.
-        WARNING: The array of calcium intensity values is NOT in 1-indexing for neurons, 
-        and the first dimension is neurons, the second is frames.
-
-        Args:
-            ca_activity: A numpy array with calcium activity data (neurons x frames).
-        """
+        """Update local calcium activity data."""
         try:
             # Validate shape consistency
             assert self.nb_neurons == ca_activity.shape[0], "Mismatch in number of neurons"
             assert len(self.frames) == ca_activity.shape[1], "Mismatch in number of frames"
             
+            # Update local copy
+            self._local_ca_data = ca_activity.copy()
+            self._ca_data_modified = True
+            logger.debug("Local calcium activity data updated")
+
+        except Exception as e:
+            logger.error(f"Error updating local calcium data: {str(e)}")
+            raise
+
+    def sync_ca_data_to_remote(self):
+        """Sync local calcium data to remote storage if modified."""
+        if not self._ca_data_modified or self._local_ca_data is None:
+            return
+
+        try:
             # Remove existing dataset if it exists
             if "/ci_int" in self.structure:
                 self.conn.root.delete_dataset(self.file_id, "/ci_int")
-            # Check if ca_activity is all NaNs
-            if np.isnan(ca_activity).all():
-                logger.warning("Skipping write: ca_activity is all NaNs")
-                return
 
             # Write the data
             self.conn.root.create_dataset(
                 self.file_id,
                 "/ci_int",
-                shape=ca_activity.shape,
+                shape=self._local_ca_data.shape,
                 dtype="float32",
                 compression=None
             )
-            # self.conn.root.write_dataset(self.file_id, "/ci_int", ca_activity)
-            # Update the structure locally
-            logger.info("Calcium activity data updated on remote server")
+            self.conn.root.write_dataset(self.file_id, "/ci_int", self._local_ca_data)
+            
+            self._ca_data_modified = False
+            logger.info("Calcium activity data synced to remote server")
+
         except Exception as e:
-            logger.error(f"Error setting 'ci_int': {str(e)}")
+            logger.error(f"Error syncing calcium data to remote: {str(e)}")
             raise
+
+    def close(self):
+        """Clean up resources and ensure data is synced."""
+        try:
+            # Sync any modified calcium data before closing
+            self.sync_ca_data_to_remote()
+            
+            if hasattr(self, 'file_id'):
+                self.conn.root.close_h5(self.file_id)
+        finally:
+            self.clear_cache()
     @property
     def frame_num(self) -> int:
         return obtain(self._attrs.get("T", 0))

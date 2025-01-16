@@ -1797,7 +1797,7 @@ class DashboardTab(QWidget):
     def __init__(self, controller, dashboard_chunk_size):
         super().__init__()
         self.controller = controller
-        self.T = self.controller.frame_num
+        self.T = self.controller.total_frames
         self.controller.frame_registered_clients.append(self)
         self.controller.neuron_keys_registered_clients.append(self)
         self.controller.present_neurons_registered_clients.append(self)

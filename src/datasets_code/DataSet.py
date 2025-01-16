@@ -25,7 +25,7 @@ class DataSet:
         # self.seg_params = None
         # self.cluster_params = None
         # self.frames = None   # the iterable of frames
-        # self.frame_num = None   # the number of frames
+        # self.total_frames = None   # the number of frames
         # self.name = None
         # self.path_from_GUI = None
         # self.nb_channels = None
@@ -33,13 +33,13 @@ class DataSet:
         # self.nb_neurons = None
         # self.h5raw_filename = None
         # self.pointdat = None   # Todo: get rid of calls in nd2??
-        # self.pointdat is a self.frame_num * (self.nb_neurons+1) * 3 array with:
+        # self.pointdat is a self.total_frames * (self.nb_neurons+1) * 3 array with:
         # self.pointdat[t][n] = [x,y,z] where x,y,z are the coordinates of neuron n in time frame t (neurons start
         #  at n>=1, 0 is for background and contains np.nans)
         #  self.NN_pointdat = None
-        # self.neuron_presence = None a self.frame_num * (self.nb_neurons+1) array of booleans indicating presence of
+        # self.neuron_presence = None a self.total_frames * (self.nb_neurons+1) array of booleans indicating presence of
         #  each neuron at each time frame
-        # self.ca_act = self.frame_num * (self.nb_neurons+1) * 2 array with:
+        # self.ca_act = self.total_frames * (self.nb_neurons+1) * 2 array with:
         #  self.ca_act[t][n] = [a, e] where a and e are the calcium activity value and error bar of neuron n in time
         #  frame t (neurons start at n>=1, 0 is for background and contains np.nans)
 
@@ -341,7 +341,7 @@ class DataSet:
         """
         Stores (or replaces if existing?) the segmentation for time t.
         Saves the dimension of the frame as the dimensions for the dataset, and saves the number of channels or checks
-        that it is consistent. Also updates self.frame_num if t >= self.frame_num.
+        that it is consistent. Also updates self.total_frames if t >= self.total_frames.
         :param t: time frame
         :param mask: segmented frame (3D numpy array with segmented[x,y,z] = segment (0 if background)
         :param force_original: if True, does not apply inverse transform (otherwise, respects self.crop and self.align)

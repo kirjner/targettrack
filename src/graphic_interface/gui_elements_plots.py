@@ -272,9 +272,10 @@ class ActivityPlotWidget(pg.PlotWidget,QGraphicsItem):
         self.controller.neuron_keys_registered_clients.append(self)
         self.controller.calcium_registered_clients.append(self)
 
+        #import pdb; pdb.set_trace()
         self.t = 0  # Todo good init
         self.nb_times = time_chunk_size
-        self.nb_frames = self.controller.frame_num
+        self.nb_frames = self.controller.total_frames
         self.times = np.arange(self.nb_times)  # list of times in x-axis (for labels)   # TODO AD good init
         self.neuron_plotidx = {}  # dict neuron_idx_from1 -> idx such that self.plots[idx] corresponds to neuron neuron_idx_from1 at time t
         # Todo I think self.neuron_plotidx could be deleted
@@ -326,6 +327,7 @@ class ActivityPlotWidget(pg.PlotWidget,QGraphicsItem):
     def _update_neuron_plot(self, neuron_id_from1):
         """Updates the plot for neuron neuron_id_from1, given that data and plot indices are correct."""
         ind = self.neuron_plotidx[neuron_id_from1]
+        print(self.times)
         activity = self.neuron_activities[neuron_id_from1][self.times]
         if np.all(np.isnan(activity[:, 0])):  # if all activities are nan, empty plots
             self.plots[ind].setData()

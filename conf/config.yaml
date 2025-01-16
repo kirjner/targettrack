@@ -1,7 +1,8 @@
 server:
-  port: 18861
+  port: 18869
 
 client:
-  port: 18861
+  port: 18869
   node: dgx001
-  file_path: /nese/mit/group/boydenlab/Konstantinos/targettrack_data/small_GT_annotation_worm_head_example.h5
+ #file_path: /om2/user/kirjner/WormWork/targettrack/unlabeled_worm_head_example.h5
+  file_path: /om2/user/kirjner/WormWork/targettrack/20250115-test-5-dog-less-sparsified-median-flipped-frames.h5

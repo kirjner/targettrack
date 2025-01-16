@@ -36,12 +36,13 @@ class HarvardLab:
         self.calcium_intensity_kernel_selectors=self.calcium_intensity_kernel_selectors.reshape(5,-1)
         assert all(np.sum(self.calcium_intensity_kernel_selectors,axis=1)==self.cikernelnorm), "bug cfpark00@gmail.com"
 
+        #import pdb; pdb.set_trace()
         ci_int = dataset.ca_act
         if ci_int is None:
-            self.ci_int = np.full((self.controller.n_neurons, self.controller.frame_num, 2), np.nan, dtype=np.float32)
+            self.ci_int = np.full((self.controller.n_neurons, self.controller.total_frames, 2), np.nan, dtype=np.float32)
             self.correct_existed = False
-        elif ci_int.shape[0] != self.controller.n_neurons or ci_int.shape[1] != self.controller.frame_num:
-            self.ci_int = np.full((self.controller.n_neurons, self.controller.frame_num, 2), np.nan, dtype=np.float32)
+        elif ci_int.shape[0] != self.controller.n_neurons or ci_int.shape[1] != self.controller.total_frames:
+            self.ci_int = np.full((self.controller.n_neurons, self.controller.total_frames, 2), np.nan, dtype=np.float32)
             self.correct_existed = False
             print("WARNING: existing calcium intensities have incorrect shape; must recompute.")
         else:
@@ -154,7 +155,7 @@ class HarvardLab:
         current_nb_neurons = self.ci_int.shape[0]
         current_ci = self.ci_int
         if current_nb_neurons < nb_neurons:
-            self.ci_int = np.full((nb_neurons, self.controller.frame_num, 2), np.nan, dtype=np.float32)
+            self.ci_int = np.full((nb_neurons, self.controller.total_frames, 2), np.nan, dtype=np.float32)
             self.ci_int[:current_nb_neurons] = current_ci
         else:
             self.ci_int = self.ci_int[:nb_neurons]

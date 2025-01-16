@@ -36,7 +36,7 @@ class gui(QMainWindow):
         self.setCentralWidget(main_widget)
         
         self.rendering = image_rendering.ImageRendering(self.controller, self.fig,
-                                                    self.controller.data_name, self.controller.frame_num)
+                                                    self.controller.data_name, self.controller.total_frames)
 
         # whether data is going to be as points or as masks:
         if self.controller.point_data is None:
@@ -54,7 +54,7 @@ class gui(QMainWindow):
 
         # Create dockable time slider
         slider_dock = QDockWidget("Time Control", self)
-        slider = controls.TimeSlider(self.controller, self.controller.frame_num, int(self.settings["time_label_num"]))
+        slider = controls.TimeSlider(self.controller, self.controller.total_frames, int(self.settings["time_label_num"]))
         slider_dock.setWidget(slider)
         self.addDockWidget(Qt.BottomDockWidgetArea, slider_dock)
 
@@ -83,7 +83,7 @@ class gui(QMainWindow):
 
         if True:
             # Annotation tab
-            annotation_tab = controls.AnnotationTab(self.controller, self.controller.frame_num,
+            annotation_tab = controls.AnnotationTab(self.controller, self.controller.total_frames,
                                                 self.settings["mask_threshold_for_new_region"])
             tracking_panel.addTab(annotation_tab, "Annotate")
             tracking_panel.tabBar().setTabTextColor(1, QtGui.QColor(0,0,0))
@@ -100,7 +100,7 @@ class gui(QMainWindow):
                 tracking_panel.tabBar().setTabTextColor(3, QtGui.QColor(0,0,0))
 
                 # Export/Import tab
-                export_import_tab = controls.ExportImportTab(self.controller, self.controller.frame_num)
+                export_import_tab = controls.ExportImportTab(self.controller, self.controller.total_frames)
                 tracking_panel.addTab(export_import_tab, "Export/Import")
                 tracking_panel.tabBar().setTabTextColor(4, QtGui.QColor(0,0,0))
 
@@ -119,7 +119,7 @@ class gui(QMainWindow):
 
         # Create dockable goto frame button
         goto_dock = QDockWidget("Go To Frame", self)
-        goto_layout = controls.GoTo(self.controller, self.controller.frame_num)
+        goto_layout = controls.GoTo(self.controller, self.controller.total_frames)
         goto_dock.setWidget(goto_layout)
         self.addDockWidget(Qt.BottomDockWidgetArea, goto_dock)
 

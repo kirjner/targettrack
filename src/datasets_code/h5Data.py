@@ -136,7 +136,7 @@ class h5Data(DataSet):
     @property
     def pointdat(self):
         """
-        pointdat is a self.frame_num * (self.nb_neurons+1) * 3 array with:
+        pointdat is a self.total_frames * (self.nb_neurons+1) * 3 array with:
         pointdat[t][n] = [x,y,z] where x,y,z are the coordinates of neuron n in time frame t (neurons start
         at n>=1, 0 is for background and contains np.nans)
         """
@@ -145,7 +145,7 @@ class h5Data(DataSet):
     @property
     def neuron_presence(self):
         """
-        self.frame_num * (self.nb_neurons+1) array of booleans indicating presence of each neuron at each time frame
+        self.total_frames * (self.nb_neurons+1) array of booleans indicating presence of each neuron at each time frame
         Returns None if it is not defined (then it should be defined soon!)
         """
         if "neuron_presence" not in self.dataset:
@@ -156,14 +156,14 @@ class h5Data(DataSet):
     def neuron_presence(self, value):
         key = "neuron_presence"
         if key not in self.dataset:
-            self.dataset.create_dataset(key, (self.frame_num, self.nb_neurons + 1), dtype=bool,
+            self.dataset.create_dataset(key, (self.total_frames, self.nb_neurons + 1), dtype=bool,
                                         maxshape=(None, None))
         elif self.dataset[key].shape != value.shape:
             try:
                 self.dataset[key].resize(value.shape)
             except RuntimeError:   # cannot resize because maxshape was given at creation (can happen with older datasets)
                 del self.dataset[key]
-                self.dataset.create_dataset(key, (self.frame_num, self.nb_neurons + 1), dtype=bool,
+                self.dataset.create_dataset(key, (self.total_frames, self.nb_neurons + 1), dtype=bool,
                                             maxshape=(None, None))
         self.dataset[key][...] = value
 
@@ -462,7 +462,7 @@ class h5Data(DataSet):
         if self.point_data and np.any(mask):
             raise ValueError("Masks and point data would interfere.")
         # update the number of frames if necessary
-        if "T" not in self.dataset.attrs or t >= self.frame_num:
+        if "T" not in self.dataset.attrs or t >= self.total_frames:
             self.dataset.attrs["T"] = t + 1
         # save/check that the number of channels is consistent
         nb_chans = self.nb_channels

@@ -177,6 +177,11 @@ class ImageRendering:
         Computes the image (from the video, independently of the presence of masks or points) to be displayed
         :return: the h*w*3 array of the frame to be displayed
         """
+        # Return early if no image data is available
+        if self.im_rraw is None:
+            self.rendered_img = None
+            return
+
         if self.blur_image:
             # SJR: if blurring chosen, blur the image before doing anything else
             # this needs to be cleaned up, e.g., with respect to dimensions (?).
@@ -190,7 +195,6 @@ class ImageRendering:
             self.im_rraw = img_r#MB added to change threshold obtained from blurred image
         else:
             img_r = self.im_rraw
-
 
         mean_r = np.mean(img_r)
         threshold_r = ((self.low * mean_r) <= img_r)
@@ -236,7 +240,10 @@ class ImageRendering:
         self.compute_rendered_img()
 
         # then actually change the display
-        self.figure.set_data(img=self.rendered_img)
+        if self.rendered_img is None:
+            self.figure.set_data(img=False)
+        else:
+            self.figure.set_data(img=self.rendered_img)
 
     def _update_mask(self):
         """

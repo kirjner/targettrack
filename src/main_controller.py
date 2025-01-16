@@ -49,7 +49,8 @@ class Controller():
     The main method is respond where it receives signals from the GUI, and performs a task.
     Some attributes are espeically worth mentioning:
     -data: the DataSet object linked to the tracking
-    -frame_num: total number of frames
+    -total_frames: total number of frames in dataset (T attribute)
+    -current_frame: current frame being displayed
     -channel_num: number of image channels
     -n_neurons: number of neurons
     -pointdat: ground truth annotations
@@ -73,10 +74,11 @@ class Controller():
         self.timer = misc.UpdateTimer(1. / int(self.settings["fps"]), self.update)
 
         # whether data is going to be as points or as masks:
-        
-        self.point_data = self.data['point_data'][0] if self.data['point_data'] else None
-
-        self.frame_num = self.data.frame_num
+        self.point_data = True #self.data['point_data'][0] if self.data['point_data'] else None
+        self.data.point_data = True
+        # Frame management
+        self._total_frames = self.data.frame_num  # Total frames in dataset (T attribute)
+        self._current_frame = i_init  # Current frame being displayed
         self.data_name = self.data.name
 
         #we fetch the useful information of the dataset, the h5 file is initialized here.
@@ -87,27 +89,30 @@ class Controller():
         self.NNmask_key=""
 
         # all points are loaded in memory
-        self.pointdat = self.data.pointdat
+        self.pointdat = np.full((self._total_frames,self.n_neurons + 1, 3), np.nan)
         if self.point_data:
             self.pointdat = self.data.pointdat
         else:   # either masks, or yet unknown
-            self.pointdat = np.full((self.frame_num,self.n_neurons + 1, 3), np.nan)
-        self.neuron_presence = self.data.neuron_presence   # self.frame_num * self.n_neurons+1 array of booleans
+            self.pointdat = np.full((self._total_frames,self.n_neurons + 1, 3), np.nan)
+        self.neuron_presence = self.data.neuron_presence   # self._total_frames * self.n_neurons+1 array of booleans
         # todo Warning, this will be saved automatically in mask mode but not in point mode (in point mode it is saved only when pointdat is saved)
 
-        if self.neuron_presence is None or self.frame_num > self.neuron_presence.shape[0]:
-            self._fill_neuron_presence()
-        elif self.frame_num > self.neuron_presence.shape[0]:
-            self._fill_neuron_presence()
+        #set to empty for now
+        #import pdb; pdb.set_trace()
+        self.data.ca_act = np.full((self.n_neurons,self._total_frames, 2), 0, dtype=np.float32)
 
-        self.NN_pointdat = np.full((self.frame_num,self.n_neurons+1,3),np.nan)
+        if self.neuron_presence is None or self._total_frames > self.neuron_presence.shape[0]:
+            self._fill_neuron_presence()
+        elif self._total_frames > self.neuron_presence.shape[0]:
+            self._fill_neuron_presence()
+        self.NN_pointdat = np.full((self._total_frames,self.n_neurons+1,3),np.nan)
         self.NN_or_GT = np.where(np.isnan(self.pointdat),self.NN_pointdat,self.pointdat)   # TODO AD: init using method?
 
         #this is about the time setting and tracks
         self.i=i_init
         n_row=int(self.settings["tracks_num_row"])
         box_ind=self.i//n_row
-        labs=[lab for lab in range(box_ind*n_row,min((box_ind+1)*n_row,self.frame_num))]
+        labs=[lab for lab in range(box_ind*n_row,min((box_ind+1)*n_row,self._total_frames))]
         self.curr_labs=labs
 
         #now these are about the main figure image
@@ -236,13 +241,15 @@ class Controller():
         self.color_manager = misc.ColorAssignment(self)
 
         # calcium activities
+        #import pdb; pdb.set_trace()
         self.hlab = HarvardLab.HarvardLab(self, self.data, self.settings)
 
         self.updated_points = {}
         
-        # if not self.hlab.correct_existed:
-        #     self.update_ci()
-        #     self.data.ca_act = self.hlab.ci_int
+        if not self.hlab.correct_existed:
+            #import pdb; pdb.set_trace()
+            self.update_ci()
+            self.data.ca_act = self.hlab.ci_int
         
     def set_point_data(self, value:bool):
         self.data.set_point_data()
@@ -251,7 +258,6 @@ class Controller():
 
     def set_up(self):
         # now we actually initialize
-        #import pdb; pdb.set_trace()
         self.select_frames()
         self.ready = True
         self.signal_nb_neurons_changed()
@@ -261,17 +267,17 @@ class Controller():
         if frame_num_change:
             old_pres = self.neuron_presence
             old_t = old_pres.shape[0]
-            self.neuron_presence = np.full((self.frame_num, self.n_neurons + 1), False)
+            self.neuron_presence = np.full((self._total_frames, self.n_neurons + 1), False)
             self.neuron_presence[:old_t] = old_pres
         else:
             old_t = 0
-            self.neuron_presence = np.full((self.frame_num, self.n_neurons + 1), False)
+            self.neuron_presence = np.full((self._total_frames, self.n_neurons + 1), False)
         if self.point_data:
             self.neuron_presence = ~np.isnan(self.pointdat[:, :, 0])
         elif self.point_data is None:
             pass
         else:
-            for t in range(old_t, self.frame_num):
+            for t in range(old_t, self._total_frames):
                 mask = self.data.get_mask(t)
                 if mask is not False:
                     present = np.unique(mask)
@@ -326,12 +332,19 @@ class Controller():
                 self.options["ShowDim"] = False
 
             # Notify clients of updated frame image data
-            for client in self.frame_img_registered_clients:
-                client.change_img_data(np.array(self.im_rraw), np.array(self.im_graw))
+            if self.im_rraw is not None:
+                for client in self.frame_img_registered_clients:
+                    client.change_img_data(np.array(self.im_rraw), np.array(self.im_graw) if self.im_graw is not None else None)
             
             threading.Thread(target=self.data.prefetch_frames, args=(self.i, "red"), daemon=True).start()
         except Exception as e:
             print(f"Error updating frame data: {str(e)}")
+            # Reset image data on error
+            self.im_rraw = None
+            self.im_graw = None
+            for client in self.frame_img_registered_clients:
+                client.change_img_data(None, None)
+
         #load the mask, from ground truth or neural network
         #show mask if either the "overlay mask" OR the "mask annotation mode" checkboxes are checked
         self.update_mask_display()
@@ -362,16 +375,29 @@ class Controller():
 
 
     @property
+    def total_frames(self) -> int:
+        """Total number of frames in dataset (T attribute)"""
+        return self._total_frames
+
+    @property 
+    def frame_num(self) -> int:
+        """Current frame being displayed"""
+        return self._current_frame
+
+    @property
     def i(self):
+        """Current frame index (for backwards compatibility)"""
         if self._fixed_frame:
             return self._i
         else:
             return self.selected_frames[self._i]
 
-    @i.setter
+    @i.setter 
     def i(self, value):
+        """Set current frame index (for backwards compatibility)"""
         self._fixed_frame = True
         self._i = value
+        self._current_frame = value  # Update current_frame when i changes
 
     def move_relative_time(self, relative_t: int):
         """
@@ -403,9 +429,10 @@ class Controller():
     def go_to_frame(self, t):
         """Moves to frame t and updates everything accordingly"""
         # set the absolute time
-        if t < 0 or t >= self.frame_num:
+        if t < 0 or t >= self._total_frames:
             return
-        self.i = t
+        self._current_frame = t
+        self.i = t  # This will trigger update through i.setter
         self.update(t_change=True)
 
     def recompute_point_presence(self):
@@ -445,7 +472,6 @@ class Controller():
         method existed, and would update not only the points but also the image etc)
         """
         # Todo AD: could simplify if only one point was changed...
-        #import pdb; pdb.set_trace()
         if not self.point_data:
             return
 
@@ -468,7 +494,7 @@ class Controller():
             pts_dict["pts_pointdat"] = np.zeros((0, 3))
 
         # adjacent in time points
-        if self.options["overlay_adj"] and not ((self.i + self.adj) < 0 or (self.i + self.adj) >= self.frame_num):
+        if self.options["overlay_adj"] and not ((self.i + self.adj) < 0 or (self.i + self.adj) >= self._total_frames):
             pts_adj = self.NN_or_GT[self.i + self.adj]
             pts_dict["pts_adj"] = self.valid_points_from_all_points(pts_adj)
         else:
@@ -547,12 +573,12 @@ class Controller():
                     self.n_neurons = max_neu
                     self.data.nb_neurons = self.n_neurons
                     old_presence = self.neuron_presence
-                    self.neuron_presence = np.zeros((self.frame_num, self.n_neurons + 1), dtype=bool)
+                    self.neuron_presence = np.zeros((self._total_frames, self.n_neurons + 1), dtype=bool)
                     self.neuron_presence[:, :old_presence.shape[1]] = old_presence
                     self.signal_nb_neurons_changed()
                 elif np.shape(self.neuron_presence)[1] < self.n_neurons:
                     old_presence = self.neuron_presence
-                    self.neuron_presence = np.zeros((self.frame_num, self.n_neurons + 1), dtype=bool)
+                    self.neuron_presence = np.zeros((self._total_frames, self.n_neurons + 1), dtype=bool)
                     self.neuron_presence[:, :old_presence.shape[1]] = old_presence
                     self.signal_nb_neurons_changed()
                 # Second, update the presence
@@ -580,6 +606,7 @@ class Controller():
                 client.change_mask_data(self.mask)
 
         # recompute corresponding calcium activities
+        #import pdb; pdb.set_trace()
         self.hlab.update_ci(self.data, t=t)
         for client in self.calcium_registered_clients:
             client.change_ca_activity(self.hlab.ci_int)
@@ -853,7 +880,7 @@ class Controller():
                 origIndex = t
 
             maskTemp = ExtFile.get_mask(t, force_original=True)   # don't apply crop and rotate on the imported masks
-            if maskTemp is not False and transformBack and origIndex < self.frame_num:
+            if maskTemp is not False and transformBack and origIndex < self._total_frames:
                 ExtFile.crop = True
                 ExtFile.align = True
 
@@ -923,7 +950,7 @@ class Controller():
                 self.data.align = OrigAlign
                 self.data.crop = OrigCrop
                 self.mask_change(origIndex)
-            elif maskTemp is not False and origIndex < self.frame_num:
+            elif maskTemp is not False and origIndex < self._total_frames:
                 img = maskTemp
 
                 if transformation_mode==1:
@@ -2179,7 +2206,7 @@ class Controller():
             return [[], []]
         trax=[]
         tray=[]
-        for i in range(max(0,self.i+self.tr_pst),min(self.frame_num,self.i+self.tr_fut+1)):
+        for i in range(max(0,self.i+self.tr_pst),min(self._total_frames,self.i+self.tr_fut+1)):
             existing_neurons = np.logical_not(np.isnan(self.NN_or_GT[i][:,0]))
             if existing_neurons[highlighted_i_from1]:
                 pt=self.NN_or_GT[i][highlighted_i_from1]
