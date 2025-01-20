@@ -39,7 +39,7 @@ TargetTrack is a user-friendly graphical interface designed for annotating 3D re
    mamba activate targettrack_gui
    ```
 
-3. **Install Required Packages on the Remote Server**:
+3. **Set Up the Conda Environment on the Remote Server**:
 
    Ensure the remote server has the necessary dependencies installed. You can use the provided `server_env.yaml` file to set up the environment:
 
@@ -49,27 +49,27 @@ TargetTrack is a user-friendly graphical interface designed for annotating 3D re
    conda install -c conda-forge jupyterlab
    ```
 
-   Some things you may need to do on the server before doing the above are
-   
-   - *Loading Miniforge Module*:
+   Before running the above, you may need to:
 
-    ```bash
-    module load openmind8/miniforge/24.3.0-0
-    mamba init
-    ```
+   - **Load Miniforge Module**:
 
-  - *Allocating Resources on the Cluster*:
-    
-    ```bash
-    tmux a -t 0
-    salloc -t 4:00:00 --gres=gpu:tesla-v100:1
-    ```
+     ```bash
+     module load openmind8/miniforge/24.3.0-0
+     mamba init
+     ```
+
+   - **Allocate Resources on the Cluster**:
+
+     ```bash
+     tmux new -s targettrack
+     salloc -t 4:00:00 --gres=gpu:tesla-v100:1
+     ```
 
 ## Usage
 
 1. **Start the Remote Server**:
 
-   On the remote server, navigate to the `targettrack` directory and run:
+   On the remote server, ensure the `targettrack_server` environment is active, navigate to the `targettrack` directory, and run:
 
    ```bash
    python hpc_gpu_server.py
@@ -95,16 +95,14 @@ TargetTrack is a user-friendly graphical interface designed for annotating 3D re
 
    Replace `/path/to/your/datafile.h5` with the path to your HDF5 data file.
 
-   You may need to have copied over your data file from some other location, using for example:
-  
-    ```bash
-    scp /orcd/data/edboyden/002/microscopy_data/targettrack_data/unlabeled_worm_head_example.h5.h5 ~/om2/targettrack/data
-    ```
+   If your data is stored on a remote server, you may need to copy it to your local machine:
 
-These commands reflect the steps taken to set up the environment and launch the TargetTrack server during the collaborative session.
+   ```bash
+   scp /orcd/data/edboyden/002/microscopy_data/targettrack_data/unlabeled_worm_head_example.h5 ~/om2/targettrack/data
+   ```
 
 ## Acknowledgements
 
 This project builds upon the original [TargetTrack](https://github.com/rahi-lab/targettrack) developed by the Rahi Lab.
 
-For detailed information on system requirements and dependencies, please refer to the original TargetTrack README. 
+For detailed information on system requirements and dependencies, please refer to the original [TargetTrack README](https://github.com/kirjner/targettrack/blob/main/TargetTrack%20README.md).
