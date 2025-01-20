@@ -35,8 +35,12 @@ class OrigFrameInfo:
         return self.info_dict[t]["center"], self.info_dict[t]["axis1"]
 
     def assign_center_and_main_axis(self, t, center, axis):
-        if t in self.info_dict and ("center" in self.info_dict[t] or "axis1" in self.info_dict[t]):
-            raise ValueError("Cannot assign center and axis because at least one of them already exists for this time.")
+        if t in self.info_dict and (
+            "center" in self.info_dict[t] or "axis1" in self.info_dict[t]
+        ):
+            raise ValueError(
+                "Cannot assign center and axis because at least one of them already exists for this time."
+            )
         d = {"center": center, "axis1": axis}
         if t not in self.info_dict:
             self.info_dict[t] = d
@@ -44,14 +48,14 @@ class OrigFrameInfo:
             self.info_dict[t].update(d)
 
     def assign_transformation_matrix(self, t, ref):
-        d = {'transformation_matrix': ref}
+        d = {"transformation_matrix": ref}
         if t not in self.info_dict:
             self.info_dict[t] = d
         else:
             self.info_dict[t].update(d)
 
     def assign_loss_rt(self, t, ref):
-        d = {'loss_RT': ref}
+        d = {"loss_RT": ref}
         if t not in self.info_dict:
             self.info_dict[t] = d
         else:
@@ -60,8 +64,8 @@ class OrigFrameInfo:
     def get_transformation(self, t):
         if t not in self.info_dict:
             return None
-        elif 'transformation_matrix' in self.info_dict[t].keys():
-            return self.info_dict[t]['transformation_matrix']
+        elif "transformation_matrix" in self.info_dict[t].keys():
+            return self.info_dict[t]["transformation_matrix"]
         else:
             return None
 
@@ -69,12 +73,12 @@ class OrigFrameInfo:
         times = self.info_dict.keys()
         a = []
         for time in times:
-            if 'transformation_matrix' in self.info_dict[time].keys():
+            if "transformation_matrix" in self.info_dict[time].keys():
                 a.append(time)
         return a
 
     def save_ref(self, t, ref):
-        d = {'rotation_ref': ref}
+        d = {"rotation_ref": ref}
         if t not in self.info_dict:
             self.info_dict[t] = d
         else:
@@ -83,8 +87,8 @@ class OrigFrameInfo:
     def get_ref_frame(self, t):
         if t not in self.info_dict:
             return None
-        elif 'rotation_ref' in self.info_dict[t].keys():
-            return self.info_dict[t]['rotation_ref']
+        elif "rotation_ref" in self.info_dict[t].keys():
+            return self.info_dict[t]["rotation_ref"]
         else:
             return None
 
@@ -110,7 +114,7 @@ class OrigFrameInfo:
         return ref_frames
 
     def save_score(self, t, score):
-        d = {'rotation_score': score}
+        d = {"rotation_score": score}
         if t not in self.info_dict:
             self.info_dict[t] = d
         else:
@@ -120,7 +124,7 @@ class OrigFrameInfo:
         return self.info_dict[t]["rotation_score"]
 
     def assign_isimproper(self, t, improper=0):
-        d = {'rotation_improper': improper}
+        d = {"rotation_improper": improper}
         if t not in self.info_dict:
             self.info_dict[t] = d
         else:

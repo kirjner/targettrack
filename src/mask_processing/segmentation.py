@@ -8,8 +8,9 @@ import scipy.spatial
 from ..parameters.GlobalParameters import GlobalParameters
 
 from scipy import ndimage as ndi
-#from skimage.morphology import watershed#MB removed to prevent future warnings
-from skimage.segmentation import watershed#MB added
+
+# from skimage.morphology import watershed#MB removed to prevent future warnings
+from skimage.segmentation import watershed  # MB added
 from skimage.feature import peak_local_max
 
 
@@ -23,7 +24,7 @@ class Segmenter:
         # Todo: maybe the segmenter should not have access to the data object, onlu the function to get frames
         self.data = data
         self.parameters = segmentation_parameters
-        self.logger = logging.getLogger('Segmenter')
+        self.logger = logging.getLogger("Segmenter")
 
     def test_segmentation_parameters(self, frame=0, user_params=False):
         """
@@ -37,10 +38,16 @@ class Segmenter:
         self.logger.debug(sys._getframe().f_code.co_name)
         if user_params:
             self.parameters.user_edit()
-        self.logger.info("Segmenting first frame with parameters {}".format(self.parameters))
+        self.logger.info(
+            "Segmenting first frame with parameters {}".format(self.parameters)
+        )
         cache = NeuronSegmentationCache()
-        img = self.data.get_frame(frame)#MB: I think this returns the red channel frame
-        neuron_segmentation2(img, cache=cache, **self.parameters, dimensions=GlobalParameters.dimensions)
+        img = self.data.get_frame(
+            frame
+        )  # MB: I think this returns the red channel frame
+        neuron_segmentation2(
+            img, cache=cache, **self.parameters, dimensions=GlobalParameters.dimensions
+        )
         cache.plot_shed_overlay()
         cache.plot_pre_shed()
 
@@ -52,13 +59,19 @@ class Segmenter:
         """
         # Todo: if loading images is very long, could be combined with feature extraction for instance by taking an argument images
         frames_to_segment = sorted(frames_to_segment)  # sorting is for fun
-        self.logger.debug("Segmenting frames {} with parameters {}".format(frames_to_segment, self.parameters))
+        self.logger.debug(
+            "Segmenting frames {} with parameters {}".format(
+                frames_to_segment, self.parameters
+            )
+        )
         params = {"dimensions": GlobalParameters.dimensions, **self.parameters}
         for frames in h.batch(frames_to_segment):
             images = [self.data.get_frame(t, force_original=True) for t in frames]
             segments = h.parallel_process(images, neuron_segmentation2, params)
             for t, segmented in zip(frames, segments):
-                self.data.save_mask(t, segmented, force_original=True)   # Todo: this will interfere with any pre-existing neurons
+                self.data.save_mask(
+                    t, segmented, force_original=True
+                )  # Todo: this will interfere with any pre-existing neurons
                 # save_mask; creates  datasets of seg amd mask for the frame ans saves the segmentation in both of them
         # todo: if loading video is long, could also be parallelized?
 
@@ -74,27 +87,27 @@ class NeuronSegmentationCache:
     """
 
     def __init__(self):
-        self.im = None   # original frame   # 1
-        self.thresholded = None   # thresholded perc most brightest after smoothing   # 3
-        self.markers = None   # seeds for watershed
+        self.im = None  # original frame   # 1
+        self.thresholded = None  # thresholded perc most brightest after smoothing   # 3
+        self.markers = None  # seeds for watershed
         self.prestick_shed = None
         self.poststick_shed = None
-        self.postminvol_shed = None   # final result (only region numbering may differ)
-        self.dtr = None   # after distance transform   # 4
-        self.sm_dtr = None   # smoothed after distance transform   # 5
-        self.sm = None   # smoothed for background removal   # 2
+        self.postminvol_shed = None  # final result (only region numbering may differ)
+        self.dtr = None  # after distance transform   # 4
+        self.sm_dtr = None  # smoothed after distance transform   # 5
+        self.sm = None  # smoothed for background removal   # 2
 
     def plot_pre_shed(self):
-        """ Plot the data before any watershed has been applied (sm, dtr) """
-        h.quick_project_imshow(self.im, 'Original image', False)
-        h.quick_project_imshow(self.sm, 'Blurred and sharpened image', False)
-        h.quick_project_imshow(self.sm_dtr, 'Smoothed distance transform', False)
-        h.quick_project_imshow(self.dtr, 'Unsmoothed distance transform', False)
+        """Plot the data before any watershed has been applied (sm, dtr)"""
+        h.quick_project_imshow(self.im, "Original image", False)
+        h.quick_project_imshow(self.sm, "Blurred and sharpened image", False)
+        h.quick_project_imshow(self.sm_dtr, "Smoothed distance transform", False)
+        h.quick_project_imshow(self.dtr, "Unsmoothed distance transform", False)
 
         # Plot the overlay of threshold and seed markers
         plt.figure(figsize=(8, 6))
         plt.title("Thresholded")
-        plt.imshow(h.project(self.thresholded, 2).T, aspect='auto', origin="lower")
+        plt.imshow(h.project(self.thresholded, 2).T, aspect="auto", origin="lower")
 
         # Find the locations of the seeds
         marker_proj = h.project(self.markers, 2)
@@ -107,16 +120,17 @@ class NeuronSegmentationCache:
                     locs[0, count] = y
                     locs[1, count] = x
                     count += 1
-        plt.scatter(locs[1], locs[0], color='red')
+        plt.scatter(locs[1], locs[0], color="red")
         plt.show()
 
     def plot_shed_overlay(self, shed=None):
-        """ overlay the chosen shed property with the original image stored in self.im """
+        """overlay the chosen shed property with the original image stored in self.im"""
         if shed is None:
             shed = self.postminvol_shed
-        h.quick_project_imshow(shed > 0, 'Segmented regions with watershed')
+        h.quick_project_imshow(shed > 0, "Segmented regions with watershed")
         # plot_segs_overlay(shed, self.im, title_prefix=title_prefix)
         # todo: restore last line, or plot with different colors?
+
 
 #        cache.prestick_shed = shed
 #        cache.poststick_shed = shed
@@ -127,9 +141,23 @@ class NeuronSegmentationCache:
 # The main segmentation function
 # Todo: if class methods can be pickled, then put these into the class
 
-def neuron_segmentation2(im, sigm=1, bg_factor=25, perc=.99, sigm_dtr=5, min_dist=1, st_factor=.2, minvol=1,
-                         min_pixels_object=120, large_obj_threshold=500, max_pixels_object=100000, dist_threshold=10,
-                         dimensions=(.1625, .1625, 1.5), cache=None):
+
+def neuron_segmentation2(
+    im,
+    sigm=1,
+    bg_factor=25,
+    perc=0.99,
+    sigm_dtr=5,
+    min_dist=1,
+    st_factor=0.2,
+    minvol=1,
+    min_pixels_object=120,
+    large_obj_threshold=500,
+    max_pixels_object=100000,
+    dist_threshold=10,
+    dimensions=(0.1625, 0.1625, 1.5),
+    cache=None,
+):
     """
     Improved segmentation of neurons
 
@@ -184,8 +212,9 @@ def neuron_segmentation2(im, sigm=1, bg_factor=25, perc=.99, sigm_dtr=5, min_dis
 
     # Smooth image, remove glow background
     sdev = np.array([sigm, sigm, sigm * xysize / zsize])
-    sm = ndi.gaussian_filter(im, sigma=sdev) - \
-         ndi.gaussian_filter(im, sigma=sdev * bg_factor)
+    sm = ndi.gaussian_filter(im, sigma=sdev) - ndi.gaussian_filter(
+        im, sigma=sdev * bg_factor
+    )
 
     if not cache is None:
         cache.sm = sm
@@ -196,37 +225,51 @@ def neuron_segmentation2(im, sigm=1, bg_factor=25, perc=.99, sigm_dtr=5, min_dis
         cache.thresholded = thr
 
     # Remove small objects
-    thr = get_components_image(thr, min_pixels_object=min_pixels_object, max_pixels_object=max_pixels_object).astype(int)
+    thr = get_components_image(
+        thr,
+        min_pixels_object=min_pixels_object,
+        max_pixels_object=max_pixels_object,
+    ).astype(int)
     # Remove small objects that are far from any large object
-    thr, _ = remove_objects_noise(thr, large_obj_threshold=large_obj_threshold, dist_threshold=dist_threshold)
+    thr, _ = remove_objects_noise(
+        thr,
+        large_obj_threshold=large_obj_threshold,
+        dist_threshold=dist_threshold,
+    )
 
     # Dist transform, seeds
     dtr = ndi.morphology.distance_transform_edt(thr, sampling=[xysize, xysize, zsize])
     if not cache is None:
         cache.dtr = dtr
-    sm_dtr = ndi.gaussian_filter(dtr, sigma=[sigm_dtr, sigm_dtr, sigm_dtr * xysize / zsize])
+    sm_dtr = ndi.gaussian_filter(
+        dtr, sigma=[sigm_dtr, sigm_dtr, sigm_dtr * xysize / zsize]
+    )
     if not cache is None:
         cache.sm_dtr = sm_dtr
 
     # Maxima based seed
     min_dist_px = int(min_dist // xysize)
     max_footprint = np.ones((2 * min_dist_px + 1, 2 * min_dist_px + 1, 3))
-    #loc_max = peak_local_max(sm_dtr, footprint=max_footprint, exclude_border=False, indices=False)#MB commented this out and added the following lines to prevent future warning
+    # loc_max = peak_local_max(sm_dtr, footprint=max_footprint, exclude_border=False, indices=False)#MB commented this out and added the following lines to prevent future warning
 
-    loc_max = peak_local_max(sm_dtr, footprint=max_footprint, exclude_border=False)#MB added
-    Mid_img = np.zeros(np.shape(sm_dtr))#MB added
-    for i in range(len(loc_max[:,0])):#MB added
-        Mid_img[loc_max[i,0],loc_max[i,1],loc_max[i,2]] = 1#MB added
-    loc_max = Mid_img#MB added
+    loc_max = peak_local_max(
+        sm_dtr, footprint=max_footprint, exclude_border=False
+    )  # MB added
+    Mid_img = np.zeros(np.shape(sm_dtr))  # MB added
+    for i in range(len(loc_max[:, 0])):  # MB added
+        Mid_img[loc_max[i, 0], loc_max[i, 1], loc_max[i, 2]] = 1  # MB added
+    loc_max = Mid_img  # MB added
 
     markers = ndi.label(loc_max)[0]
     if not cache is None:
         cache.markers = markers
 
     # Watershed
-    shed = np.array(watershed(-sm_dtr, markers, mask=thr),dtype=np.uint8)
+    shed = np.array(watershed(-sm_dtr, markers, mask=thr), dtype=np.uint8)
     if not cache is None:
-        cache.prestick_shed = np.copy(shed) # SJR: I added np.copy since prestick_shed was being updated with each change in "shed"
+        cache.prestick_shed = np.copy(
+            shed
+        )  # SJR: I added np.copy since prestick_shed was being updated with each change in "shed"
 
     # Stick together
     stick_together(shed, st_factor)
@@ -271,12 +314,17 @@ def get_components_image(im, min_pixels_object=120, max_pixels_object=100000):
     for new_obj_num, obj_num in enumerate(good_obj_nums):
         if all_obj_sizes[obj_num] < max_pixels_object:
             good_idxs = np.where(labeled == obj_num)
-            im_new[good_idxs] = new_obj_num+1
+            im_new[good_idxs] = new_obj_num + 1
 
     return im_new
 
 
-def remove_objects_noise(img, large_obj_threshold=500, dist_threshold=10, dimensions=(.1625, .1625, 1.5)):
+def remove_objects_noise(
+    img,
+    large_obj_threshold=500,
+    dist_threshold=10,
+    dimensions=(0.1625, 0.1625, 1.5),
+):
     """
     Remove objects that are both smaller than large_obj_threshold and are further than dist_threshold from the nearest
     large object.
@@ -284,11 +332,17 @@ def remove_objects_noise(img, large_obj_threshold=500, dist_threshold=10, dimens
     obj_sizes = np.bincount(img.flatten())
     largest_idxs = np.where(obj_sizes > large_obj_threshold)[0][1:]  # Omit 0
     if len(largest_idxs) == 0:
-         print('Warning: No objects of size larger than ' + str(large_obj_threshold) + ' and less than the given'
-                         ' max_pixels_object found')
-         return img, []
+        print(
+            "Warning: No objects of size larger than "
+            + str(large_obj_threshold)
+            + " and less than the given"
+            " max_pixels_object found"
+        )
+        return img, []
     smallest_idxs = np.where(obj_sizes < large_obj_threshold)[0]
-    largest_idxs_locs = np.array(np.where(img * np.isin(img, largest_idxs))).T * dimensions
+    largest_idxs_locs = (
+        np.array(np.where(img * np.isin(img, largest_idxs))).T * dimensions
+    )
     all_min_dists = []
     for idx in smallest_idxs:
         if obj_sizes[idx] > 0:
@@ -321,8 +375,7 @@ def stick_together(seg, factor, connectivity=1):
     pot_neighbors = get_potential_neighbors(seg)
 
     for s1, s2 in pot_neighbors:
-        nb_neighbors = get_nb_neighbors(seg == s1, seg == s2,
-                                        connectivity=connectivity)
+        nb_neighbors = get_nb_neighbors(seg == s1, seg == s2, connectivity=connectivity)
         if nb_neighbors == 0:
             # No neighbors
             continue
@@ -347,7 +400,7 @@ def get_potential_neighbors(seg):
     conncomp = ndi.label(seg)[0]
     pot_neighbors = []
     for lab in np.unique(conncomp):
-        groups = np.unique(seg[conncomp==lab])
+        groups = np.unique(seg[conncomp == lab])
         pot_neighbors += list(itertools.combinations(groups, 2))
     return pot_neighbors
 
@@ -392,31 +445,31 @@ def binary_translate_3d(image, vector):
     :return:        Shifted image
     """
     vector = vector.astype(int)
-    x,y,z = vector
+    x, y, z = vector
     nx, ny, nz = image.shape
 
     xshift = np.zeros(image.shape, dtype=bool)
-    if x==0:
+    if x == 0:
         xshift = image
-    elif x>0:
-        xshift[x:,:,:] = image[:-x,:,:]
-    elif x<0:
-        xshift[:x,:,:] = image[-x:,:,:]
+    elif x > 0:
+        xshift[x:, :, :] = image[:-x, :, :]
+    elif x < 0:
+        xshift[:x, :, :] = image[-x:, :, :]
 
     yshift = np.zeros(image.shape, dtype=bool)
-    if y==0:
+    if y == 0:
         yshift = xshift
-    elif y>0:
-        yshift[:,y:,:] = xshift[:,:-y,:]
-    elif y<0:
-        yshift[:,:y,:] = xshift[:,-y:,:]
+    elif y > 0:
+        yshift[:, y:, :] = xshift[:, :-y, :]
+    elif y < 0:
+        yshift[:, :y, :] = xshift[:, -y:, :]
 
     out = np.zeros(image.shape, dtype=bool)
-    if z==0:
+    if z == 0:
         out = yshift
-    elif z>0:
-        out[:,:,z:] = yshift[:,:,:-z]
-    elif z<0:
-        out[:,:,:z] = yshift[:,:,-z:]
+    elif z > 0:
+        out[:, :, z:] = yshift[:, :, :-z]
+    elif z < 0:
+        out[:, :, :z] = yshift[:, :, -z:]
 
     return out

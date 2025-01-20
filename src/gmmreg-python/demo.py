@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding=utf-8
+# coding=utf-8
 
 import time
 import subprocess
@@ -11,6 +11,7 @@ import gmmreg
 
 import plotting
 
+
 def test(f_config, display=True):
     model, scene, after_tps = gmmreg.run_config(f_config)
     if display:
@@ -18,7 +19,7 @@ def test(f_config, display=True):
 
 
 def run_executable(gmmreg_exe, f_config, method, display=True):
-    cmd = '%s %s %s'%(gmmreg_exe, f_config, method)
+    cmd = "%s %s %s" % (gmmreg_exe, f_config, method)
     t1 = time.time()
     subprocess.call(cmd, shell=True)
     t2 = time.time()
@@ -30,17 +31,18 @@ def run_executable(gmmreg_exe, f_config, method, display=True):
 def display_pts(f_config):
     c = configparser.ConfigParser()
     c.read(f_config)
-    section_common = 'FILES'
-    mf = c.get(section_common, 'model')
-    sf = c.get(section_common, 'scene')
-    tf = c.get(section_common, 'transformed_model')
+    section_common = "FILES"
+    mf = c.get(section_common, "model")
+    sf = c.get(section_common, "scene")
+    tf = c.get(section_common, "transformed_model")
 
     m = loadtxt(mf)
     s = loadtxt(sf)
     t = loadtxt(tf)
-    plotting.displayABC(m,s,t)
+    plotting.displayABC(m, s, t)
 
 
 import sys
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test(sys.argv[1])
