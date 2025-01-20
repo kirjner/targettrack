@@ -7,6 +7,7 @@ from src.graphic_interface import gui_single
 import hydra
 from omegaconf import DictConfig
 from logging_config import setup_logger
+
 # Configure logging
 logger = setup_logger(__name__)
 
@@ -14,29 +15,30 @@ logger = setup_logger(__name__)
 def parse_remote_path(path):
     """
     Parse remote path for a tunneled connection
-    
+
     Args:
         path: Should be in format node:/path/to/file.h5
-            
+
     Returns:
         (node, filepath) or None if local path
     """
     # Check if path is remote (has node: prefix)
-    path_match = re.match(r'^([^:]+):(.+)$', path)
+    path_match = re.match(r"^([^:]+):(.+)$", path)
     if not path_match:
         return None
-        
+
     node, filepath = path_match.groups()
     logger.info(f"Using tunneled connection for node {node}")
-    
+
     return node, filepath
+
+
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def app(cfg: DictConfig):
     node = cfg.client.node
     file_path = cfg.client.file_path
     port = cfg.client.port
     assert file_path is not None, "file_path must be provided"
-    
 
     dataset_path = node + ":" + file_path if node else file_path
     # Parse path
@@ -44,7 +46,7 @@ def app(cfg: DictConfig):
 
     try:
         app = QApplication(sys.argv)
-        app.setApplicationName("HPC Neural GUI") 
+        app.setApplicationName("HPC Neural GUI")
         if remote_info:
             node, filepath = remote_info
             # Connect via SSH tunnel on localhost
@@ -54,11 +56,12 @@ def app(cfg: DictConfig):
             gui = gui_single.gui_single(dataset_path)
             # gui.show()
         sys.exit(app.exec_())
-        
+
     except Exception as e:
         logger.error(f"Failed to start GUI: {str(e)}")
         sys.exit(1)
-  
+
+
 if __name__ == "__main__":
     # if len(sys.argv) != 2:
     #     print("Usage:")

@@ -7,13 +7,20 @@ class ColorAssignment:
     """
     This class assigns a new color to each neuron that is newly assigned to a key.
     """
+
     def __init__(self, controller):
         self.controller = controller
-        self.color_list = [[int(val) for val in col.split(",")]
-                           for col in self.controller.settings["keys_colors"].split(";")]
+        self.color_list = [
+            [int(val) for val in col.split(",")]
+            for col in self.controller.settings["keys_colors"].split(";")
+        ]
         self.no_color = [255, 255, 255]
-        self.neuron_color_index = {}   # i = self.neuron_color_index[neuron_id_from1]; color is self.color_list[i]
-        self.color_count = np.zeros(len(self.color_list))   # this contains the number of times each color is used
+        self.neuron_color_index = (
+            {}
+        )  # i = self.neuron_color_index[neuron_id_from1]; color is self.color_list[i]
+        self.color_count = np.zeros(
+            len(self.color_list)
+        )  # this contains the number of times each color is used
         self.controller.neuron_keys_registered_clients.append(self)
 
     def color_for_neuron(self, idx_from1):
@@ -48,13 +55,17 @@ class UpdateTimer:
         self.timer = QtCore.QTimer()
         self.running = False
         self.timer.setSingleShot(True)
-        self.timer.setInterval(interval*1000)   # setInterval takes ms
+        self.timer.setInterval(interval * 1000)  # setInterval takes ms
+
         def new_func():
             self.running = False
-            update_fun(self.t_change)   # TODO make sure t_change is updated properly
+            update_fun(self.t_change)  # TODO make sure t_change is updated properly
             self.t_change = False
+
         self.timer.timeout.connect(new_func)
-        self.last_update_time = time.time() - 1  # last update time to prevent excessively frequent updating; -1 is only here to allow for initial update.
+        self.last_update_time = (
+            time.time() - 1
+        )  # last update time to prevent excessively frequent updating; -1 is only here to allow for initial update.
         self.update_interval = interval
         self.t_change = False
         self.frozen = False

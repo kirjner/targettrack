@@ -6,22 +6,28 @@ class AssignmentFinderFactory:
     def create_assigner(cls, kind, annotations, *args, **kwargs):
         if "cluster" in kind:
             from src.mask_processing.clustering import Clustering
+
             assigner = Clustering(annotations, *args, **kwargs)
         elif "classifi" in kind or "clf" in kind:
             from src.mask_processing.classification import Classification
+
             assigner = Classification(kind, annotations, *args, **kwargs)
         else:
-            raise ValueError("Unkown assigner kind. kind must contain one of ('cluster', 'clf', 'classifi').")
+            raise ValueError(
+                "Unkown assigner kind. kind must contain one of ('cluster', 'clf', 'classifi')."
+            )
         return assigner
 
 
 # Todo: there could be a parameter "overwrite" to some methods of the above or below classes
+
 
 class AssignmentFinderInterface:
     """
     This class defines the interface for classes that implement algorithms for automatic or manual?#Todo
     assignment of segments to neurites.
     """
+
     def __init__(self, dataset, *args, **kwargs):
         """
         Class to find assignments for segments.

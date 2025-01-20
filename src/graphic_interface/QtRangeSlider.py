@@ -9,7 +9,8 @@ class RangeSlider(QWidget):
     """
     Slider Object allowing for a range
     """
-    def __init__(self,parent=None):
+
+    def __init__(self, parent=None):
         super().__init__(parent)
 
         self.first_position = 1
@@ -104,11 +105,13 @@ class RangeSlider(QWidget):
 
         self.opt.sliderPosition = self.first_position
         self._first_sc = self.style().hitTestComplexControl(
-            QStyle.CC_Slider, self.opt, event.pos())
+            QStyle.CC_Slider, self.opt, event.pos()
+        )
 
         self.opt.sliderPosition = self.second_position
         self._second_sc = self.style().hitTestComplexControl(
-            QStyle.CC_Slider, self.opt, event.pos())
+            QStyle.CC_Slider, self.opt, event.pos()
+        )
 
     def mouseMoveEvent(self, event: QMouseEvent):
 
@@ -132,11 +135,11 @@ class RangeSlider(QWidget):
     def mouseReleaseEvent(self, event: QMouseEvent):
         pass
 
-    def connect(self,func):
+    def connect(self, func):
         def mouseReleaseEvent(event: QMouseEvent):
-            func([self.first_position,self.second_position])
-        self.mouseReleaseEvent=mouseReleaseEvent
+            func([self.first_position, self.second_position])
 
+        self.mouseReleaseEvent = mouseReleaseEvent
 
     def sizeHint(self):
         SliderLength = 84
@@ -145,7 +148,14 @@ class RangeSlider(QWidget):
         w = SliderLength
         h = self.style().pixelMetric(QStyle.PM_SliderThickness, self.opt)
 
-        if (self.opt.tickPosition & QSlider.TicksAbove or self.opt.tickPosition & QSlider.TicksBelow):
+        if (
+            self.opt.tickPosition & QSlider.TicksAbove
+            or self.opt.tickPosition & QSlider.TicksBelow
+        ):
             h += TickSpace
 
-        return self.style().sizeFromContents(QStyle.CT_Slider, self.opt, QSize(w, h)).expandedTo(QApplication.globalStrut())
+        return (
+            self.style()
+            .sizeFromContents(QStyle.CT_Slider, self.opt, QSize(w, h))
+            .expandedTo(QApplication.globalStrut())
+        )

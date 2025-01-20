@@ -1,4 +1,5 @@
 from nd2reader import ND2Reader
+
 # import .file_loading.tiff_loader as tif
 import csv
 
@@ -10,7 +11,7 @@ class WormReader:
     """
     General class for reading in worm data
     works for tif and nd2 format videos
-    
+
     Usage reades = WormReader(filename)
           reader.get_3d_img(c = c, t = t)
 
@@ -29,9 +30,9 @@ class WormReader:
         self.logger = logging.getLogger("WormReader")
 
         self.movie_file = filename
-        
+
         # Prepare file readers for the original images
-        if os.path.splitext(self.movie_file)[1] == '.nd2':
+        if os.path.splitext(self.movie_file)[1] == ".nd2":
             self.reader = ND2Reader(self.movie_file)
             self.prep_nd2_reader(c=self.RED)
             self.frames = self.nd2_measure_frames()
@@ -63,7 +64,7 @@ class WormReader:
 
         mi = 0
         ma = max_n_frames
-        prev_t = -1   # anything that is not the starting point
+        prev_t = -1  # anything that is not the starting point
         while True:
             t = mi + (ma - mi) // 2
             try:
@@ -74,7 +75,7 @@ class WormReader:
             if prev_t == t:
                 break
             prev_t = t
-        return range(0, t+1)
+        return range(0, t + 1)
 
     def get_3d_img(self, c=0, t=0):
         """
@@ -88,14 +89,18 @@ class WormReader:
             elif c.lower() == "green":
                 c = WormReader.GREEN
             else:
-                raise ValueError("Color c must be either 0 or 1, or 'green' or 'red', respectively")
+                raise ValueError(
+                    "Color c must be either 0 or 1, or 'green' or 'red', respectively"
+                )
         else:
             c = int(c)
-            if not c in [0,1]:
-                raise ValueError("Color c must be either 0 or 1, or 'green' or 'red', respectively")
+            if not c in [0, 1]:
+                raise ValueError(
+                    "Color c must be either 0 or 1, or 'green' or 'red', respectively"
+                )
 
         if os.path.splitext(self.movie_file)[1] == ".nd2":
-            self.prep_nd2_reader(c=c)   # TODO: not necessary to do this every time??
+            self.prep_nd2_reader(c=c)  # TODO: not necessary to do this every time??
             img3d = self.reader[t]
 
         # elif os.path.splitext(self.movie_file)[1] == ".tif":
@@ -114,11 +119,11 @@ class WormReader:
         So looping over the reader goes stright through time
         """
 
-        self.reader.default_coords['c'] = c
-        self.reader.bundle_axes         = 'yxz'
-        self.reader.iter_axes           = 't'
+        self.reader.default_coords["c"] = c
+        self.reader.bundle_axes = "yxz"
+        self.reader.iter_axes = "t"
 
-    def get_position(self, output_file = None):
+    def get_position(self, output_file=None):
 
         raw_metadata = self.reader._parser._raw_metadata
 
@@ -128,16 +133,21 @@ class WormReader:
         timesteps = self.reader.get_timesteps()
 
         if output_file is None:
-            output_file = self.movie_file.split('/')[1]
-            output_file = output_file.replace('.nd2', '_position.csv')
-            output_file = 'results_real/'+ output_file
+            output_file = self.movie_file.split("/")[1]
+            output_file = output_file.replace(".nd2", "_position.csv")
+            output_file = "results_real/" + output_file
 
-        self.logger.info("Output file is written at " + output_file )
+        self.logger.info("Output file is written at " + output_file)
 
-        with open(output_file, 'w', newline='') as file:
-            writer = csv.writer( file)
+        with open(output_file, "w", newline="") as file:
+            writer = csv.writer(file)
             for index in range(len(x_data)):
-                row = [timesteps[index],x_data[index],y_data[index],z_data[index]]
+                row = [
+                    timesteps[index],
+                    x_data[index],
+                    y_data[index],
+                    z_data[index],
+                ]
                 writer.writerow(row)
 
     def __del__(self):

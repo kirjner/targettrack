@@ -4,10 +4,11 @@ import logging
 from typing import Optional, Dict, Any
 import time
 
-logger = logging.getLogger('targettrack_client')
+logger = logging.getLogger("targettrack_client")
+
 
 class TargetTrackClient:
-    def __init__(self, host='localhost', port=18861):
+    def __init__(self, host="localhost", port=18861):
         """
         Initialize connection to TargetTrack remote service
         """
@@ -22,9 +23,9 @@ class TargetTrackClient:
         """
         try:
             self.connection = rpyc.connect(
-                self.host, 
+                self.host,
                 self.port,
-                config={'sync_request_timeout': 300}  # 5 minute timeout
+                config={"sync_request_timeout": 300},  # 5 minute timeout
             )
             logger.info(f"Connected to remote service at {self.host}:{self.port}")
         except Exception as e:
@@ -34,18 +35,24 @@ class TargetTrackClient:
     def train_network(self, config: Dict[str, Any], callback=None) -> str:
         """
         Start network training job on remote service
-        
+
         Args:
             config: Training configuration dictionary
             callback: Optional callback function for progress updates
-            
+
         Returns:
             job_id: Identifier for tracking training progress
         """
         try:
             # Validate config
-            required = ['model_name', 'instance_name', 'dataset_path', 
-                       'training_frames', 'validation_frames', 'epochs']
+            required = [
+                "model_name",
+                "instance_name",
+                "dataset_path",
+                "training_frames",
+                "validation_frames",
+                "epochs",
+            ]
             missing = [k for k in required if k not in config]
             if missing:
                 raise ValueError(f"Missing required config keys: {missing}")
@@ -72,12 +79,12 @@ class TargetTrackClient:
             try:
                 status = self.get_job_status(job_id)
                 callback(status)
-                
-                if status['status'] in ['completed', 'failed']:
+
+                if status["status"] in ["completed", "failed"]:
                     break
-                    
+
                 time.sleep(poll_interval)
-                
+
             except Exception as e:
                 logger.error(f"Error monitoring job {job_id}: {str(e)}")
                 break
@@ -95,7 +102,7 @@ class TargetTrackClient:
     def process_frames(self, h5_path: str, frames: list, operation: str):
         """
         Run processing operation on frames
-        
+
         Args:
             h5_path: Path to H5 dataset
             frames: List of frame indices to process

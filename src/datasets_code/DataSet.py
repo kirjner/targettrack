@@ -3,7 +3,6 @@ import numpy as np
 from src.graphic_interface.image_standardizer import ImageAligner, ImageCropper
 
 
-
 class DataSet:
     """
     Wrapper around both Dataset, which can apply a transformation prior to sending data, or apply
@@ -15,9 +14,9 @@ class DataSet:
         self.cropper = None
         self._align = False
         self.crop = False
-        self.coarse_seg_mode = False # MB added
-        self.only_NN_mask_mode = False # MB
-        self.use_seg_for_feature = False #MB added
+        self.coarse_seg_mode = False  # MB added
+        self.only_NN_mask_mode = False  # MB
+        self.use_seg_for_feature = False  # MB added
 
         self.point_data = None
 
@@ -45,20 +44,22 @@ class DataSet:
 
     @classmethod
     def load_dataset(cls, dataset_path):
-        #if dataset_path.endswith(".nd2"):
+        # if dataset_path.endswith(".nd2"):
         #    from .nd2Data import nd2Data
         #    return nd2Data(dataset_path)
-        if True:#else:
+        if True:  # else:
             from .h5Data import h5Data
+
             return h5Data(dataset_path)
 
     @classmethod
     def create_dataset(cls, dataset_path):
-        #if dataset_path.endswith(".nd2"):
+        # if dataset_path.endswith(".nd2"):
         #    from .nd2Data import nd2Data
         #    return nd2Data._create_dataset(dataset_path)
-        if True:#else:
+        if True:  # else:
             from .h5Data import h5Data
+
             return h5Data._create_dataset(dataset_path)
 
     @property
@@ -84,12 +85,12 @@ class DataSet:
 
     @abc.abstractmethod
     def close(self):
-        """Close and/or save dataset properly"""   # TODO
+        """Close and/or save dataset properly"""  # TODO
         raise NotImplementedError
 
     @abc.abstractmethod
     def save(self):
-        """Save what??"""   # TODO
+        """Save what??"""  # TODO
         raise NotImplementedError
 
     @classmethod
@@ -183,12 +184,11 @@ class DataSet:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_validation_set(self, NNname):   # MB added this
+    def get_validation_set(self, NNname):  # MB added this
         """
         gets the frames that are validation set in NN
         """
         raise NotImplementedError
-
 
     @abc.abstractmethod
     def feature_array(self):
@@ -308,12 +308,14 @@ class DataSet:
         if self.point_data:
             existing_neurons = np.logical_not(np.isnan(self.pointdat[t][:, 0]))
         elif self.point_data is None:
-            existing_neurons = np.full(self.nb_neurons+1, False)
+            existing_neurons = np.full(self.nb_neurons + 1, False)
         else:
             try:
                 mask = self.get_mask(t)
                 neurons = np.unique(mask)[0:]
-                existing_neurons = np.array([False] + [n in neurons for n in range(1, self.nb_neurons + 1)])
+                existing_neurons = np.array(
+                    [False] + [n in neurons for n in range(1, self.nb_neurons + 1)]
+                )
             except KeyError:
                 existing_neurons = np.full(self.nb_neurons + 1, False)
         return existing_neurons
@@ -334,10 +336,10 @@ class DataSet:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _save_frame(self, t, frameR, frameG=0, mask=0):#MB added
+    def _save_frame(self, t, frameR, frameG=0, mask=0):  # MB added
         raise NotImplementedError
 
-    def save_frame(self, t, frameR, frameG = 0, mask = 0, force_original=False):#MB added
+    def save_frame(self, t, frameR, frameG=0, mask=0, force_original=False):  # MB added
         """
         Stores (or replaces if existing?) the segmentation for time t.
         Saves the dimension of the frame as the dimensions for the dataset, and saves the number of channels or checks
@@ -351,17 +353,17 @@ class DataSet:
             if np.any(frameG):
                 frameG = self._reverse_transform(t, frameG)
             if mask:
-                mask =  self._reverse_transform(t, mask)
+                mask = self._reverse_transform(t, mask)
         if np.any(mask):
-            self._save_frame(t,frameR,frameG,mask)
+            self._save_frame(t, frameR, frameG, mask)
         else:
-            self._save_frame(t,frameR,frameG, 0)
+            self._save_frame(t, frameR, frameG, 0)
 
     @abc.abstractmethod
     def _save_mask(self, t, mask):
         raise NotImplementedError
 
-    def save_mask(self, t, mask, force_original=False,centerRot=0):
+    def save_mask(self, t, mask, force_original=False, centerRot=0):
         """
         Stores (or replaces if existing?) the segmentation for time t.
         :param t: time frame
@@ -370,7 +372,7 @@ class DataSet:
         """
         if not force_original:
             if centerRot:
-                mask = self._reverse_transform(t, mask,centerRot)
+                mask = self._reverse_transform(t, mask, centerRot)
             else:
                 mask = self._reverse_transform(t, mask)
         self._save_mask(t, mask)
@@ -483,11 +485,11 @@ class DataSet:
 
     @abc.abstractmethod
     def set_NN_pointdat(self, key):
-        '''
+        """
         set NN pointdat
         :param key: key
         :return:
-        '''
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -499,7 +501,7 @@ class DataSet:
         """
         raise NotImplementedError
 
-    def get_method_results(self, method_name:str):
+    def get_method_results(self, method_name: str):
         """
         :param method_name: str, the name of the method instance (such as NN)
         :return: method_pointdat, the assignments made by the method, in the same format as pointdat
@@ -512,19 +514,17 @@ class DataSet:
         """
         raise NotImplementedError
 
-
     ####################################################################################
     # defining the transformations
 
     def _transform(self, t, img, is_mask=False):
         if self.align:
             img = self.aligner.align(img, t, is_mask)
-        if self.crop:   # TODO: crop and/or resize??
+        if self.crop:  # TODO: crop and/or resize??
             img = self.cropper.crop(img)
         return img
 
-
-    def _reverse_transform(self, t, img,centerRot=0):
+    def _reverse_transform(self, t, img, centerRot=0):
         """
         Depending on current transformation mode, applies the necessary reverse transformations to img which is assumed
         to be a mask.
@@ -532,5 +532,5 @@ class DataSet:
         if self.crop:
             img = self.cropper.inverse_crop(img)
         if self.align:
-            img = self.aligner.dealign(img, t,centerRot)
+            img = self.aligner.dealign(img, t, centerRot)
         return img

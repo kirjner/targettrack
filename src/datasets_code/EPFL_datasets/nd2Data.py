@@ -17,13 +17,21 @@ class nd2Data(AnnotationData, WormReader, FeatureData, OrigFrameInfo, DataSet):
     def pull_NN_results(self, NetName, runname, newpath):
         pass
 
-    def __init__(self, dataset_path=None,
-                 annotations=None, movie=None, features=None, orig_frame_info=None):
+    def __init__(
+        self,
+        dataset_path=None,
+        annotations=None,
+        movie=None,
+        features=None,
+        orig_frame_info=None,
+    ):
         DataSet.__init__(self, dataset_path)
         self.path_from_GUI = dataset_path
         if movie is None:
             with open(os.path.join(dataset_path, "movie.txt"), "r") as f:
-                movie_file = f.readline().strip("\n")   # Todo: might have problems with \ufeff (utf8 encoding)
+                movie_file = f.readline().strip(
+                    "\n"
+                )  # Todo: might have problems with \ufeff (utf8 encoding)
             WormReader.__init__(self, movie_file)
         else:
             WormReader.__init__(self, movie.movie_file)
@@ -47,15 +55,16 @@ class nd2Data(AnnotationData, WormReader, FeatureData, OrigFrameInfo, DataSet):
             OrigFrameInfo.__init__(self, stemfile)
             self.__dict__.update(orig_frame_info.__dict__)
 
-        self.nb_channels = 2   # I think our nd2 data always has only 2 channels, red and green
+        self.nb_channels = (
+            2  # I think our nd2 data always has only 2 channels, red and green
+        )
 
         self.seg_params = ParameterInitializer.load_parameters("segmentation", stemfile)
         self.cluster_params = ParameterInitializer.load_parameters("cluster", stemfile)
         # TODO: load and save parameters
         self.point_data = False
-        self._ci_int = None   # Todo: load from file if existing
+        self._ci_int = None  # Todo: load from file if existing
         self.h5raw_filename = None
-
 
     def close(self):
         """
@@ -87,23 +96,23 @@ class nd2Data(AnnotationData, WormReader, FeatureData, OrigFrameInfo, DataSet):
         return set(self.segmented_times()) - set(self.ground_truth_frames())
 
     def keys(self):
-        return []   # TODO
+        return []  # TODO
 
     def to_file(self):
-        '''
+        """
         Save all the computation(segmentations, rotations, features) to the file
         :return:
-        '''
+        """
         AnnotationData.to_file(self)
         OrigFrameInfo.to_file(self)
         FeatureData.to_file(self)
 
     @classmethod
-    def from_file(cls,dataset_path):
-        '''
+    def from_file(cls, dataset_path):
+        """
         Initialize a class from the file
         :param dataset_path: the location of the file
         :return:
-        '''
+        """
         self = nd2Data.__init__(dataset_path)
         return self
