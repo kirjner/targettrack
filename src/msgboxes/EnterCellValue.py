@@ -3,11 +3,30 @@
 Created on Tue Nov 19 17:38:58 2019
 """
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QShortcut, QComboBox, QDialog, QDialogButtonBox, QInputDialog, QLineEdit, QFormLayout, QDesktopWidget
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QMenu,
+    QVBoxLayout,
+    QSizePolicy,
+    QMessageBox,
+    QWidget,
+    QPushButton,
+    QShortcut,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QInputDialog,
+    QLineEdit,
+    QFormLayout,
+    QDesktopWidget,
+)
 from PyQt5 import QtGui
-#from PyQt5.QtGui import QIcon, QKeySequence
+
+# from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import pyqtSignal, QObject, Qt
-#import PyQt package, allows for GUI interactions
+
+# import PyQt package, allows for GUI interactions
 
 
 # TODO AD: could go into Qthelpers or other existing doc?
@@ -17,7 +36,7 @@ class CustomDialog(QDialog):
         super(CustomDialog, self).__init__(*args, **kwargs)
 
         self.setWindowTitle("Enter ID number for new neuron")
-        self.setGeometry(100,100, 500,200)
+        self.setGeometry(100, 100, 500, 200)
         self.center()
 
         self.entry1 = QLineEdit()
@@ -25,13 +44,13 @@ class CustomDialog(QDialog):
         self.entry1.setMaxLength(4)
         self.entry1.setAlignment(Qt.AlignRight)
 
-#        self.entry2 = QLineEdit()
-#        self.entry2.setValidator(QtGui.QIntValidator())
-#        self.entry2.setMaxLength(4)
-#        self.entry2.setAlignment(Qt.AlignRight)
+        #        self.entry2 = QLineEdit()
+        #        self.entry2.setValidator(QtGui.QIntValidator())
+        #        self.entry2.setMaxLength(4)
+        #        self.entry2.setAlignment(Qt.AlignRight)
 
         flo = QFormLayout()
-        flo.addRow('ID number (integer):', self.entry1)
+        flo.addRow("ID number (integer):", self.entry1)
 
         QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
 
@@ -39,11 +58,10 @@ class CustomDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-#        self.layout = QVBoxLayout()
-#        self.layout.addWidget(self.buttonBox
+        #        self.layout = QVBoxLayout()
+        #        self.layout.addWidget(self.buttonBox
         flo.addWidget(self.buttonBox)
         self.setLayout(flo)
-
 
     def center(self):
         # geometry of the main window
@@ -59,14 +77,14 @@ class CustomDialog(QDialog):
         self.move(qr.topLeft())
 
 
-#MB added: to get the subset of cells
+# MB added: to get the subset of cells
 class CustomDialogSubCell(QDialog):
 
     def __init__(self, *args, **kwargs):
         super(CustomDialogSubCell, self).__init__(*args, **kwargs)
 
         self.setWindowTitle("Do you want to change only this subset?")
-        self.setGeometry(100,100, 500,100)
+        self.setGeometry(100, 100, 500, 100)
         self.center()
 
         self.entry1 = QLineEdit()
@@ -74,13 +92,12 @@ class CustomDialogSubCell(QDialog):
         self.entry1.setMaxLength(4)
         self.entry1.setAlignment(Qt.AlignRight)
 
-#        self.entry2 = QLineEdit()
-#        self.entry2.setValidator(QtGui.QIntValidator())
-#        self.entry2.setMaxLength(4)
-#        self.entry2.setAlignment(Qt.AlignRight)
+        #        self.entry2 = QLineEdit()
+        #        self.entry2.setValidator(QtGui.QIntValidator())
+        #        self.entry2.setMaxLength(4)
+        #        self.entry2.setAlignment(Qt.AlignRight)
 
         flo = QFormLayout()
-
 
         QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
 
@@ -88,8 +105,8 @@ class CustomDialogSubCell(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-#        self.layout = QVBoxLayout()
-#        self.layout.addWidget(self.buttonBox
+        #        self.layout = QVBoxLayout()
+        #        self.layout.addWidget(self.buttonBox
         flo.addWidget(self.buttonBox)
         self.setLayout(flo)
 

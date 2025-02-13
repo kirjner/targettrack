@@ -8,6 +8,7 @@ class GlobalParameters:
     Meant to behave a bit like a singleton class, with all instances sharing the same class members so the latter can be
     accessed from anywhere without need to pass an existing instance.
     """
+
     chunksize = None
     n_processes = None
     dimensions = None
@@ -15,7 +16,12 @@ class GlobalParameters:
     # TODO: read and write from some config file
 
     @classmethod
-    def set_params(cls, chunksize: int = None, n_processes: int = None, dimensions: tuple = None):
+    def set_params(
+        cls,
+        chunksize: int = None,
+        n_processes: int = None,
+        dimensions: tuple = None,
+    ):
         """
         Sets the value of any one or several parameters. If no value is given, sets all to default.
         If any parameters are given, their value will be set and the others will be left unchanged.

@@ -9,13 +9,18 @@ class ImageRendering:
     """
     Class used to render the video frames and masks properly and dynamically.
     """
-    dimensions = (.1625, .1625, 1.5)  # the extents of a pixel along the x, y and z dimensions
+
+    dimensions = (
+        0.1625,
+        0.1625,
+        1.5,
+    )  # the extents of a pixel along the x, y and z dimensions
 
     # AD These are the constant transparencies for mask and mask of highlighted neurons
     mask_transparency = 0.3
     highlighted_transparency = 0.8
     # SJR: default number of mask colors; if there are more neurons than this number, repeat colors
-    nmaskcolors = 15#MB changed the color to 15
+    nmaskcolors = 15  # MB changed the color to 15
 
     def __init__(self, controller, figure, data_name, nb_frames):
         """
@@ -63,7 +68,8 @@ class ImageRendering:
         cols[:, -1] = 0.3  # SJR: all objects are largely transparent
         cols[0, -1] = 0  # SJR: object 0 (= background) is completely transparent
         self.cmap_mask = mpl.colors.ListedColormap(
-            cols)  # SJR: these are the colors that will be passed on for drawing the mask
+            cols
+        )  # SJR: these are the colors that will be passed on for drawing the mask
 
         self.highlighted = 0  # which neuron/value in the mask should be highlighted
 
@@ -164,7 +170,10 @@ class ImageRendering:
     def _find_gamma_pieces(self, gamma):  # CFP
         """Helper function for _f_gamma"""
         last = 4
-        for n, el in zip([1, 0, -1, -2, -3, -4, -5], [2, 1, 0.5, 0.25, 0.125, 0.0625, 0.003125]):
+        for n, el in zip(
+            [1, 0, -1, -2, -3, -4, -5],
+            [2, 1, 0.5, 0.25, 0.125, 0.0625, 0.003125],
+        ):
             if gamma >= el:
                 w1 = last - gamma
                 w2 = gamma - el
@@ -186,31 +195,49 @@ class ImageRendering:
             xysize, xysize2, zsize = self.dimensions
             sdev = np.array([sigm, sigm, sigm * xysize / zsize])
             im = self.im_rraw
-            img_r = sim.gaussian_filter(im, sigma=sdev) - sim.gaussian_filter(im, sigma=sdev * bg_factor)
-            self.im_rraw = img_r#MB added to change threshold obtained from blurred image
+            img_r = sim.gaussian_filter(im, sigma=sdev) - sim.gaussian_filter(
+                im, sigma=sdev * bg_factor
+            )
+            self.im_rraw = (
+                img_r  # MB added to change threshold obtained from blurred image
+            )
         else:
             img_r = self.im_rraw
 
-
         mean_r = np.mean(img_r)
-        threshold_r = ((self.low * mean_r) <= img_r)
-        img_r = np.clip(threshold_r * img_r, 0, (mean_r + (255 - mean_r) * self.high)) / 255 * self.blend_r
-        
+        threshold_r = (self.low * mean_r) <= img_r
+        img_r = (
+            np.clip(threshold_r * img_r, 0, (mean_r + (255 - mean_r) * self.high))
+            / 255
+            * self.blend_r
+        )
+
         if self.im_graw is not None:
             mean_g = np.mean(self.im_graw)
-            threshold_g = ((self.low * mean_g) <= self.im_graw)
-            img_g = np.clip(threshold_g * self.im_graw, 0, (mean_g + (255 - mean_g) * self.high)) / 255 * self.blend_g
+            threshold_g = (self.low * mean_g) <= self.im_graw
+            img_g = (
+                np.clip(
+                    threshold_g * self.im_graw,
+                    0,
+                    (mean_g + (255 - mean_g) * self.high),
+                )
+                / 255
+                * self.blend_g
+            )
         else:
             img_g = img_r * self.blend_g / (self.blend_r + 1e-8)
         img_b = img_r  # blue channel is also green for a two channel image
         # SJR: This is why the red channel is really pink / purple
 
         # combine the three channels in one
-        combined_img = np.concatenate((img_r[:, :, :, None], img_g[:, :, :, None], img_b[:, :, :, None]), axis=3)
+        combined_img = np.concatenate(
+            (img_r[:, :, :, None], img_g[:, :, :, None], img_b[:, :, :, None]),
+            axis=3,
+        )
         if self.fast_gamma:
             self.rendered_img = self._f_gamma(combined_img)
         else:
-            self.rendered_img = combined_img ** self.gamma
+            self.rendered_img = combined_img**self.gamma
 
     def compute_rendered_mask(self):  # AD
         """
@@ -219,12 +246,16 @@ class ImageRendering:
         """
         # Warning: this could be longer than before because we compute the colormap for the whole mask instead of just
         # one slice (but in return, changing z should be faster)
-        mask_rgba = self.cmap_mask((self.raw_mask % self.nmaskcolors + 1) * (self.raw_mask != 0))
+        mask_rgba = self.cmap_mask(
+            (self.raw_mask % self.nmaskcolors + 1) * (self.raw_mask != 0)
+        )
         mask_rgba[self.raw_mask == 0, 3] = 0
         mask_rgba[self.raw_mask != 0, 3] = self.mask_transparency
 
         if self.highlighted > 0:
-            mask_rgba[self.raw_mask == self.highlighted, 3] = self.highlighted_transparency
+            mask_rgba[self.raw_mask == self.highlighted, 3] = (
+                self.highlighted_transparency
+            )
 
         self.rendered_mask = mask_rgba
 
