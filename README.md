@@ -91,17 +91,17 @@ TargetTrack is a user-friendly graphical interface designed for annotating 3D re
    YYYY-MM-DD HH:MM:SS,XXX - H5STREAM/18861 - INFO - server started on [0.0.0.0]:18861
    ```
 
-   In the example output above the `hostname=node2810` and the `port=18861`.
+   In the example output above the `hostname=node2810` and the `port=18861`. 
 
 2. **Establish an SSH Tunnel from the Local Machine**:
 
    Set up port forwarding to securely connect to the remote server:
 
    ```bash
-   ssh -v -N -L ${port}:remote_server_address:${port} $(whoami)@remote_server_address
+   ssh -v -N -L ${port}:{node}:${port} $(whoami)@remote_server_address
    ```
 
-   Replace `remote_server_address` (e.g. with the actual address of your remote server and `your_username` with your username on that server.
+   Replace `remote_server_address` with the actual address of your remote server  (e.g `orcd-login001.mit.edu`).
 
 3. **Launch the GUI on the Local Machine**:
 
