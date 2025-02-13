@@ -6,15 +6,14 @@ dependencies:
   - python=3.8.13
   - numpy=1.23.4
   - pandas=1.1.3
+  - scipy=1.10.1
+  - sckit-image=0.21.0
+  - scikit-learn=1.3.2
+  - tqdm=4.67.1
+  - sparse=0.15.5
+  - nd2reader=3.3.0
   - matplotlib=3.5.2
   - h5py=3.6.0
-  - scipy
-  - scikit-learn
-  - scikit-image
-  - nd2reader
-  - sparse
-  - tqdm
-  - hydra-core
   - pip
   - pip:
     - "opencv-python-headless>=4.5.1.48"
