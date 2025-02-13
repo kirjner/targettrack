@@ -75,15 +75,33 @@ TargetTrack is a user-friendly graphical interface designed for annotating 3D re
    python hpc_gpu_server.py
    ```
 
+   If that command runs succesfully, an output like below printed to the command line:
+   ```bash
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO - Starting HPC GPU server on 0.0.0.0:18861
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO - Connect using hostname: node2810
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO -
+   GPU Information:
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO - CUDA Device: NVIDIA L4
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO - Device Count: 1
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO -
+   Device 0:
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO -   Name: NVIDIA L4
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO -   Compute Capability: 8.9
+   YYYY-MM-DD HH:MM:SS,XXX - hpc_gpu_server - INFO -   Total Memory: 22478.3 MB
+   YYYY-MM-DD HH:MM:SS,XXX - H5STREAM/18861 - INFO - server started on [0.0.0.0]:18861
+   ```
+
+   In the example output above the `hostname=node2810` and the `port=18861`.
+
 2. **Establish an SSH Tunnel from the Local Machine**:
 
    Set up port forwarding to securely connect to the remote server:
 
    ```bash
-   ssh -v -N -L 18861:remote_server_address:18861 your_username@remote_server_address
+   ssh -v -N -L ${port}:remote_server_address:${port} $(whoami)@remote_server_address
    ```
 
-   Replace `remote_server_address` with the actual address of your remote server and `your_username` with your username on that server.
+   Replace `remote_server_address` (e.g. with the actual address of your remote server and `your_username` with your username on that server.
 
 3. **Launch the GUI on the Local Machine**:
 
